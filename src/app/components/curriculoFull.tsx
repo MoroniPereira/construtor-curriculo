@@ -28,7 +28,7 @@ export function CurriculoFull({ value }: { value: any }) {
 
   return (
     <div className='flex justify-center' id="curriculo-pdf">
-      <div className="bg-white p-8 rounded-md w-full min-w-[210mm] h-auto">
+      <div className="bg-white p-8 rounded-md w-full min-w-[210mm] min-h-auto">
       <div className="flex flex-col mb-4 gap-1">
           <h1 className="text-4xl font-bold mb-4">{value.nomeCompleto || 'Nome Completo'}</h1>
           <p>Email: {value.email}.</p>
