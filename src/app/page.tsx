@@ -1,101 +1,213 @@
-import Image from "next/image";
+'use client'
+
+import { Header } from "./components/commons/header";
+import { Footer } from "./components/commons/footer";
+import { useState } from "react";
+import { DataPessoal } from "./components/commons/form/dataPessoal";
+import { ExpAcademica } from "./components/commons/form/expAcademica";
+import { ExpProfissional } from "./components/commons/form/expProfissional";
+import { Endereco } from "./components/commons/form/endereco";
+import { Objetivo } from "./components/commons/form/objetivo";
+import { MaisInfo } from "./components/commons/form/maisInfo";
+import { formData } from "./types";
+import { CurriculoFull } from "./components/curriculoFull";
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [formData, setFormData] = useState<formData>({
+    nomeCompleto: '',
+    email: '',
+    dataNascimento: '',
+    contato: '',
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+    endereco: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+
+    formacaoAcademica: [],
+    experienciaProfissional: [],
+    maisInfo: [],
+
+    objetivoProfissional: ''
+  });
+
+  const gerarPDF = async () => {
+    const elemento = document.getElementById("curriculo-pdf");
+    if (!elemento) return;
+  
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
+  
+    const canvas = await html2canvas(elemento, { scale: 2, useCORS: true });
+    const imgData = canvas.toDataURL("image/png");
+  
+    const pageWidth = 210;
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  
+    pdf.internal.pageSize.height = imgHeight;
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+  
+    const pdfBlob = pdf.output("blob");
+    const url = URL.createObjectURL(pdfBlob);
+    setPdfUrl(url);
+  };
+  
+
+  const baixarPDF = () => {
+    if (pdfUrl) {
+      const link = document.createElement("a");
+      link.href = pdfUrl;
+      link.download = `curriculo-${formData.nomeCompleto || "curriculo"}.pdf`;
+      link.click();
+    }
+    setPdfUrl(null);
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleExpsAcademicas = (exp: {
+    curso: string,
+    tipoCurso: string,
+    instituicao: string,
+    inicio: string,
+    termino: string
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      formacaoAcademica: [...prev.formacaoAcademica, exp]
+    }));
+  };
+
+  const handleExpsProfissionais = (exp: {
+    empresa: string,
+    cargo: string,
+    inicio: string,
+    termino: string,
+    descricao: string
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      experienciaProfissional: [...prev.experienciaProfissional, exp]
+    }));
+  };
+
+  const handleMaisInfo = (maisInfo: {
+    titulo: string,
+    descricao: string
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      maisInfo: [...prev.maisInfo, maisInfo]
+    }));
+  };
+
+  const handleObjetivo = (objetivo: string) => {
+    setFormData(prev => ({
+      ...prev,
+      objetivoProfissional: objetivo
+    }));
+  };
+
+  const handleRemoveExpAcademica = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      formacaoAcademica: prev.formacaoAcademica.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleRemoveExpProfissional = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      experienciaProfissional: prev.experienciaProfissional.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleRemoveMaisInfo = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      maisInfo: prev.maisInfo.filter((_, i) => i !== index)
+    }));
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex flex-col">
+      <Header/>
+      
+      <main className="w-full flex flex-col items-center justify-center p-4 md:p-8">
+        <div className="w-full lg:w-1/2 xl:max-w-2xl">
+          <form className="flex flex-col gap-4">
+            <DataPessoal dadosUser={formData} toogleDados={handleInputChange} />
+
+            <Endereco dadosUser={formData} toogleDados={handleInputChange} />
+
+            <ExpAcademica 
+              expsAcademica={formData.formacaoAcademica} 
+              handleExpsAcademica={handleExpsAcademicas}
+              handleRemoveExpAcademica={handleRemoveExpAcademica}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+            <ExpProfissional 
+              expsProfissionais={formData.experienciaProfissional}
+              handleExpsProfissionais={handleExpsProfissionais}
+              handleRemoveExpProfissional={handleRemoveExpProfissional}
+            />
+
+            <MaisInfo 
+              maisInfo={formData.maisInfo}
+              handleMaisInfo={handleMaisInfo} 
+              handleRemoveMaisInfo={handleRemoveMaisInfo}
+            />
+
+            <Objetivo dataObjetivo={formData} toogleDados={handleObjetivo} />
+          </form>
+        </div>
+
+        <div className="w-full py-6 lg:w-1/2 xl:max-w-2xl flex flex-col gap-4">
+          {!pdfUrl && (
+            <button
+              onClick={gerarPDF}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
           >
-            Read our docs
-          </a>
+              Gerar PDF
+            </button>
+          )}
+
+          {pdfUrl && (
+            <button
+              onClick={baixarPDF}
+              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Baixar PDF
+            </button>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <div
+        id="curriculo-pdf"
+        className="absolute top-[-9999px] left-[-9999px]"
+      >
+        <CurriculoFull value={formData} />
+      </div>
+
+      <Footer/>
     </div>
   );
 }
